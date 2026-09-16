@@ -40,8 +40,17 @@ graph TB
     end
 
     subgraph Data Tier
-        DB[("Database<br>PostgreSQL 16 / SQL Server")]
+        DB[("Database<br>PostgreSQL 16 / SQL Server / SQLite")]
         Repositories -->|Npgsql / EF Core Provider| DB
+    end
+
+    subgraph Realtime & Background Tier
+        SignalRHub["SignalR Hub (/hubs/booking)<br>WebSocket Realtime Sync"]
+        HangfireServer["Hangfire Background Worker<br>Minutely Expired Booking Scanner"]
+        Gateway --> SignalRHub
+        Gateway --> HangfireServer
+        SignalRHub -.->|Push Events| NextApp
+        HangfireServer --> Repositories
     end
 ```
 

@@ -170,3 +170,19 @@ dotnet test
 | **Docker** | `docker-compose.yml`, Dockerfiles cho Backend và Frontend | **Hoàn thành 100%** |
 | **Bộ tài liệu** | Thư mục `docs/` chi tiết: Architecture, ERD, API Specs, Business Rules, Setup | **Hoàn thành 100%** |
 | **Agent Workspace** | Thư mục `agent/`: Instructions, Personas, Workflows, Prompts | **Hoàn thành 100%** |
+
+---
+
+## 7. CÁC TÍNH NĂNG CỘNG ĐIỂM (BONUS POINTS - HOÀN THÀNH 6/6)
+
+Dự án đã triển khai trọn vẹn toàn bộ **6/6 tính năng cộng điểm** theo Mục 12 của `REQUIREMENTS.md`:
+
+| STT | Tính năng Bonus | Chi tiết triển khai kỹ thuật | Trạng thái |
+| :---: | :--- | :--- | :---: |
+| **1** | **Unit & Integration Test** | 7 ca kiểm thử tự động xUnit (TC1, TC2, TC3, TC4, TC6, Adjacent slots, Concurrency Race Condition) chạy bằng `dotnet test`. | **Hoàn thành 100%** |
+| **2** | **Docker Compose** | Đóng gói 3 container (PostgreSQL 16, ASP.NET Core API, Next.js 14) chạy bằng `docker compose up --build`. | **Hoàn thành 100%** |
+| **3** | **SignalR (Realtime Updates)** | Tích hợp SignalR Hub (`/hubs/booking`), cập nhật khung giờ trống và danh sách booking tức thì giữa các client mà không cần reload trang. | **Hoàn thành 100%** |
+| **4** | **Hangfire Background Job** | Tự động quét và hủy các booking quá hạn chưa được duyệt (`Pending` & `StartTime <= UtcNow`) mỗi phút. Dashboard tại: `http://localhost:5000/hangfire`. | **Hoàn thành 100%** |
+| **5** | **Xử lý Concurrency & Race Condition** | Khóa bất đồng bộ (`SemaphoreSlim` theo StaffId) kết hợp Database transaction chống triệt để tình huống 2 khách hàng bấm đặt cùng 1 khung giờ tại cùng 1 mili-giây. | **Hoàn thành 100%** |
+| **6** | **Giao diện Lịch trực quan (Interactive Calendar)** | Màn hình `/admin/calendar` hiển thị thời khóa biểu tuần trực quan: phân màu theo trạng thái booking, lọc nhân viên, xem nhanh chi tiết và duyệt/hủy trực tiếp. | **Hoàn thành 100%** |
+
