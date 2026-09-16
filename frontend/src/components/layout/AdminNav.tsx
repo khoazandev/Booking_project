@@ -10,6 +10,7 @@ export function AdminNav() {
 
   const links = [
     { href: '/admin/bookings', label: 'Quản trị Bookings', icon: CalendarDays },
+    { href: '/admin/calendar', label: 'Lịch Biểu Tuần (Calendar)', icon: CalendarDays },
     { href: '/admin/services', label: 'Quản lý Dịch vụ', icon: Scissors },
     { href: '/admin/schedules', label: 'Xếp lịch Nhân viên', icon: Clock },
   ];

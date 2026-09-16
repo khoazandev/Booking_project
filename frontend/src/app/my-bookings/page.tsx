@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
+import { startSignalR } from '@/lib/signalr';
 import { isAuthenticated } from '@/lib/auth';
 import { Booking, BookingStatus, PagedResult } from '@/types';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
@@ -51,6 +52,18 @@ export default function MyBookingsPage() {
 
   useEffect(() => {
     fetchMyBookings();
+
+    // BONUS 3: SignalR Realtime updates for Customer's bookings
+    let active = true;
+    startSignalR().then((hub) => {
+      if (!hub || !active) return;
+      hub.on('BookingStatusUpdated', () => active && fetchMyBookings());
+      hub.on('BookingCancelled', () => active && fetchMyBookings());
+    });
+
+    return () => {
+      active = false;
+    };
   }, [fetchMyBookings]);
 
   const handleConfirmCancel = async (e: React.FormEvent) => {

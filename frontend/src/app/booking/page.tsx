@@ -3,6 +3,7 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiClient, ApiError } from '@/lib/api-client';
+import { startSignalR } from '@/lib/signalr';
 import { isAuthenticated } from '@/lib/auth';
 import { Service, Staff, AvailableSlot, Booking, PagedResult } from '@/types';
 import { formatCurrency, formatTime } from '@/lib/utils';
@@ -92,6 +93,22 @@ function BookingContent() {
     }
 
     loadSlots();
+
+    // BONUS 3: Realtime SignalR listener for available slot changes
+    let active = true;
+    startSignalR().then((hub) => {
+      if (!hub || !active) return;
+      hub.on('AvailableSlotsChanged', (data: { staffId?: number; date?: string }) => {
+        if (!active) return;
+        if (!data?.staffId || data.staffId === Number(selectedStaffId)) {
+          loadSlots();
+        }
+      });
+    });
+
+    return () => {
+      active = false;
+    };
   }, [selectedServiceId, selectedStaffId, selectedDate]);
 
   // 3. Handle Submit Booking
