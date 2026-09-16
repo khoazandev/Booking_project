@@ -1,10 +1,14 @@
+using System.Collections.Concurrent;
+using System.Data;
 using BookingSystem.Api.Common.Exceptions;
 using BookingSystem.Api.Data;
+using BookingSystem.Api.Hubs;
 using BookingSystem.Api.Models.DTOs.Bookings;
 using BookingSystem.Api.Models.DTOs.Common;
 using BookingSystem.Api.Models.Entities;
 using BookingSystem.Api.Models.Enums;
 using BookingSystem.Api.Services.Interfaces;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookingSystem.Api.Services.Implementations;
@@ -12,10 +16,16 @@ namespace BookingSystem.Api.Services.Implementations;
 public class BookingService : IBookingService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IHubContext<BookingHub> _hubContext;
 
-    public BookingService(ApplicationDbContext context)
+    // Concurrency Lock: Semaphore per Staff ID to eliminate race conditions
+    // when multiple users attempt to book the exact same slot at the exact same millisecond.
+    private static readonly ConcurrentDictionary<int, SemaphoreSlim> _staffLocks = new();
+
+    public BookingService(ApplicationDbContext context, IHubContext<BookingHub> hubContext)
     {
         _context = context;
+        _hubContext = hubContext;
     }
 
     public async Task<IEnumerable<AvailableSlotDto>> GetAvailableSlotsAsync(int staffId, int serviceId, DateOnly date)
@@ -141,56 +151,79 @@ public class BookingService : IBookingService
             throw new BadRequestException("Khung giờ đặt lịch nằm ngoài ca làm việc của nhân viên trong ngày đã chọn.");
         }
 
-        // 6. TC3: Validate Overlap Detection Formula
-        // NewStart < ExistingEnd && NewEnd > ExistingStart for Status != Cancelled
-        var hasConflict = await _context.Bookings
-            .AnyAsync(b => b.StaffId == staff.Id &&
-                           b.Status != BookingStatus.Cancelled &&
-                           startTimeUtc < b.EndTime &&
-                           endTimeUtc > b.StartTime);
+        // 6. BONUS 5: Concurrency Control / Race Condition Prevention
+        // Acquire staff semaphore lock so simultaneous requests for the same staff
+        // are serialized and checked atomically against the database.
+        var staffLock = _staffLocks.GetOrAdd(staff.Id, _ => new SemaphoreSlim(1, 1));
+        await staffLock.WaitAsync();
 
-        if (hasConflict)
+        try
         {
-            throw new ConflictException("Nhân viên đã có lịch hẹn trong khung giờ này. Vui lòng chọn khung giờ khác.");
+            // TC3: Validate Overlap Detection Formula within the protected critical section
+            // NewStart < ExistingEnd && NewEnd > ExistingStart for Status != Cancelled
+            var hasConflict = await _context.Bookings
+                .AnyAsync(b => b.StaffId == staff.Id &&
+                               b.Status != BookingStatus.Cancelled &&
+                               startTimeUtc < b.EndTime &&
+                               endTimeUtc > b.StartTime);
+
+            if (hasConflict)
+            {
+                throw new ConflictException("Nhân viên đã có lịch hẹn trong khung giờ này. Vui lòng chọn khung giờ khác.");
+            }
+
+            // Generate Unique Booking Code
+            var bookingCode = $"BK-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
+
+            var booking = new Booking
+            {
+                BookingCode = bookingCode,
+                CustomerId = customer.Id,
+                ServiceId = service.Id,
+                StaffId = staff.Id,
+                StartTime = startTimeUtc,
+                EndTime = endTimeUtc,
+                Status = BookingStatus.Pending,
+                CustomerNote = request.CustomerNote?.Trim(),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Bookings.Add(booking);
+            await _context.SaveChangesAsync();
+
+            var dto = new BookingDto
+            {
+                Id = booking.Id,
+                BookingCode = booking.BookingCode,
+                CustomerId = customer.Id,
+                CustomerName = customer.FullName,
+                ServiceId = service.Id,
+                ServiceName = service.Name,
+                ServicePrice = service.Price,
+                DurationMinutes = service.DurationMinutes,
+                StaffId = staff.Id,
+                StaffName = staff.FullName,
+                StartTime = booking.StartTime,
+                EndTime = booking.EndTime,
+                Status = booking.Status,
+                CustomerNote = booking.CustomerNote,
+                CreatedAt = booking.CreatedAt
+            };
+
+            // BONUS 3: SignalR Realtime Broadcast
+            await _hubContext.Clients.All.SendAsync("BookingCreated", dto);
+            await _hubContext.Clients.All.SendAsync("AvailableSlotsChanged", new
+            {
+                StaffId = staff.Id,
+                Date = bookingDate.ToString("yyyy-MM-dd")
+            });
+
+            return dto;
         }
-
-        // Generate Unique Booking Code
-        var bookingCode = $"BK-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
-
-        var booking = new Booking
+        finally
         {
-            BookingCode = bookingCode,
-            CustomerId = customer.Id,
-            ServiceId = service.Id,
-            StaffId = staff.Id,
-            StartTime = startTimeUtc,
-            EndTime = endTimeUtc,
-            Status = BookingStatus.Pending,
-            CustomerNote = request.CustomerNote?.Trim(),
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _context.Bookings.Add(booking);
-        await _context.SaveChangesAsync();
-
-        return new BookingDto
-        {
-            Id = booking.Id,
-            BookingCode = booking.BookingCode,
-            CustomerId = customer.Id,
-            CustomerName = customer.FullName,
-            ServiceId = service.Id,
-            ServiceName = service.Name,
-            ServicePrice = service.Price,
-            DurationMinutes = service.DurationMinutes,
-            StaffId = staff.Id,
-            StaffName = staff.FullName,
-            StartTime = booking.StartTime,
-            EndTime = booking.EndTime,
-            Status = booking.Status,
-            CustomerNote = booking.CustomerNote,
-            CreatedAt = booking.CreatedAt
-        };
+            staffLock.Release();
+        }
     }
 
     public async Task<PagedResultDto<BookingDto>> GetMyBookingsAsync(int customerId, BookingStatus? status, int page, int pageSize)
@@ -284,7 +317,12 @@ public class BookingService : IBookingService
         booking.Status = newStatus;
         await _context.SaveChangesAsync();
 
-        return MapToDto(booking);
+        var dto = MapToDto(booking);
+
+        // BONUS 3: SignalR Realtime Broadcast
+        await _hubContext.Clients.All.SendAsync("BookingStatusUpdated", dto);
+
+        return dto;
     }
 
     public async Task<BookingDto> CancelBookingAsync(int bookingId, int currentUserId, bool isAdmin, string cancellationReason)
@@ -328,7 +366,17 @@ public class BookingService : IBookingService
 
         await _context.SaveChangesAsync();
 
-        return MapToDto(booking);
+        var dto = MapToDto(booking);
+
+        // BONUS 3: SignalR Realtime Broadcast
+        await _hubContext.Clients.All.SendAsync("BookingCancelled", dto);
+        await _hubContext.Clients.All.SendAsync("AvailableSlotsChanged", new
+        {
+            StaffId = booking.StaffId,
+            Date = DateOnly.FromDateTime(booking.StartTime).ToString("yyyy-MM-dd")
+        });
+
+        return dto;
     }
 
     private static BookingDto MapToDto(Booking b)

@@ -1,8 +1,11 @@
 using System.Text;
 using BookingSystem.Api.Common.Middleware;
 using BookingSystem.Api.Data;
+using BookingSystem.Api.Hubs;
 using BookingSystem.Api.Services.Implementations;
 using BookingSystem.Api.Services.Interfaces;
+using Hangfire;
+using Hangfire.MemoryStorage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -16,14 +19,12 @@ var defaultConn = builder.Configuration.GetConnectionString("DefaultConnection")
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    // If running in Docker or PostgresConnection is provided, use PostgreSQL
     if (!string.IsNullOrEmpty(postgresConn) && builder.Environment.IsProduction())
     {
         options.UseNpgsql(postgresConn);
     }
     else
     {
-        // Default SQLite local development database
         options.UseSqlite(defaultConn ?? "Data Source=booking.db");
     }
 });
@@ -33,8 +34,22 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IServiceManagementService, ServiceManagementService>();
 builder.Services.AddScoped<IStaffScheduleService, StaffScheduleService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IExpiredBookingScannerService, ExpiredBookingScannerService>();
 
-// 3. Configure JWT Authentication
+// 3. BONUS 3: Register SignalR
+builder.Services.AddSignalR();
+
+// 4. BONUS 4: Register Hangfire with In-Memory Storage
+builder.Services.AddHangfire(config =>
+{
+    config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+          .UseSimpleAssemblyNameTypeSerializer()
+          .UseDefaultTypeSerializer()
+          .UseMemoryStorage();
+});
+builder.Services.AddHangfireServer();
+
+// 5. Configure JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "super_secret_jwt_key_booking_service_management_2026_demo_key_12345";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "BookingSystemApi";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "BookingSystemClient";
@@ -58,11 +73,26 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtAudience,
         ClockSkew = TimeSpan.Zero
     };
+
+    // Support token in query string for SignalR web sockets
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.AddAuthorization();
 
-// 4. Configure CORS
+// 6. Configure CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -74,7 +104,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// 5. Add Controllers & Swagger with JWT support
+// 7. Add Controllers & Swagger with JWT support
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -83,7 +113,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Service Booking Management API",
         Version = "v1",
-        Description = "Hệ thống Quản lý Đặt lịch Dịch vụ (Full-Stack Demo API)"
+        Description = "Hệ thống Quản lý Đặt lịch Dịch vụ (Full-Stack Demo API with SignalR & Hangfire)"
     });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -113,14 +143,14 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// 6. Auto-migrate & Seed Database on startup
+// 8. Auto-migrate & Seed Database on startup
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await DbInitializer.SeedAsync(context);
 }
 
-// 7. Configure HTTP request pipeline
+// 9. Configure HTTP request pipeline
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 if (app.Environment.IsDevelopment() || true) // Enable Swagger in demo
@@ -138,6 +168,15 @@ app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
+// 10. BONUS 4: Configure Hangfire Dashboard & Recurring Job
+app.UseHangfireDashboard("/hangfire");
+RecurringJob.AddOrUpdate<IExpiredBookingScannerService>(
+    "auto-cancel-expired-pending-bookings",
+    service => service.CancelExpiredPendingBookingsAsync(),
+    Cron.Minutely);
+
+// 11. Map Controllers & SignalR Hub
 app.MapControllers();
+app.MapHub<BookingHub>("/hubs/booking");
 
 app.Run();
