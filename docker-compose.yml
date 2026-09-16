@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # Database Service (PostgreSQL)
+  db:
+    image: postgres:16-alpine
+    container_name: booking_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: BookingDb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Password123!
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d BookingDb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Backend Service (ASP.NET Core 8 Web API)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: booking_backend
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=BookingDb;Username=postgres;Password=Password123!
+      - Jwt__Key=super_secret_jwt_key_booking_service_management_2026_demo_key_12345
+      - Jwt__Issuer=BookingSystemApi
+      - Jwt__Audience=BookingSystemClient
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Frontend Service (Next.js 14 App Router)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: booking_frontend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
