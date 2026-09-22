@@ -26,7 +26,6 @@
 6. [Danh Mục API Endpoints (Swagger & REST Specs)](#6-danh-mục-api-endpoints-swagger--rest-specs)
 7. [Thuật Toán Chống Trùng Lịch & Concurrency Control](#7-thuật-toán-chống-trùng-lịch--concurrency-control)
 8. [Bộ Kiểm Thử Nghiệp Vụ Tự Động (xUnit Tests)](#8-bộ-kiểm-thử-nghiệp-vụ-tự-động-xunit-tests)
-9. [Bảng Đánh Giá Hoàn Thành & Tính Năng Điểm Cộng (6/6)](#9-bảng-đánh-giá-hoàn-thành--tính-năng-điểm-cộng-66)
 
 ---
 
@@ -279,30 +278,6 @@ Passed!  - Failed: 0, Passed: 9, Skipped: 0, Total: 9, Duration: 167 ms
 | **STAFF1**| `CreateStaff_ValidData_ShouldCreateSuccessfully` | Admin thêm mới kỹ thuật viên hợp lệ vào hệ thống. | ✅ **PASS** |
 | **STAFF2**| `CreateStaff_DuplicateEmail_ShouldThrowConflictException` | Chặn tạo kỹ thuật viên nếu trùng email $\to$ Trả về `409 Conflict`. | ✅ **PASS** |
 
----
-
-## 9. BẢNG ĐÁNH GIÁ HOÀN THÀNH & TÍNH NĂNG ĐIỂM CỘNG (6/6)
-
-### 9.1. Ma Trận Yêu Cầu Cốt Lõi (Đạt 100/100 điểm)
-- [x] **Chức năng Booking (20/20):** Tạo, xem khung giờ trống, xem danh sách cá nhân, hủy lịch có lý do, admin duyệt/hoàn thành/hủy.
-- [x] **Quy tắc nghiệp vụ (15/15):** EndTime = StartTime + Duration, chặn quá khứ, kiểm tra giờ làm việc, công thức chống trùng lịch chuẩn xác.
-- [x] **ASP.NET Core & Cấu trúc Backend (15/15):** DTO Pattern, Service Layer tách biệt, Middleware ProblemDetails RFC 7807, async/await 100%.
-- [x] **EF Core & Database (10/10):** 5 Entities chuẩn hóa, Composite Index tối ưu truy vấn xung đột, EF Migrations & SQL Script độc lập, Seed data đầy đủ.
-- [x] **Next.js & TypeScript (15/15):** App Router, Strict TypeScript, 3 UI states (Loading/Empty/Error), Form validation, disable submit button, Responsive Tailwind CSS.
-- [x] **Authentication & Phân quyền (10/10):** JWT Bearer, băm BCrypt, Claims-based security, chống IDOR tuyệt đối.
-- [x] **Validation & Xử lý lỗi (5/5):** DataAnnotations DTO backend, bắt mã 409 hiển thị cảnh báo nghiệp vụ thân thiện.
-- [x] **Chất lượng code (5/5):** Clean Code, tuân thủ nguyên lý SOLID, đặt tên chuẩn mực.
-- [x] **Git & README (5/5):** Conventional commits lịch sử rõ ràng, README bàn giao chuyên nghiệp.
-
-### 9.2. Hoàn Thành Toàn Bộ 6/6 Tính Năng Điểm Cộng (Bonus)
-1. 🧪 **Automated Unit Tests:** 9 test cases tự động bằng xUnit, kiểm thử toàn bộ luồng nghiệp vụ cốt lõi.
-2. 🐳 **Docker Compose:** Đóng gói đồng bộ Frontend Standalone, ASP.NET Core API và PostgreSQL 16 Alpine.
-3. ⚡ **SignalR Realtime:** Cập nhật khung giờ trống và trạng thái booking tức thì giữa các thiết bị không cần tải lại trang.
-4. ⏰ **Hangfire Background Job:** Quét định kỳ mỗi phút tự động hủy các booking `Pending` quá hạn.
-5. 🔒 **Race Condition Concurrency Control:** Khóa hai tầng `SemaphoreSlim` + `Serializable Transaction` giải quyết triệt để xung đột mili-giây.
-6. 📅 **Interactive Visual Calendar:** Màn hình `/admin/calendar` xem thời khóa biểu tuần trực quan theo khung giờ.
-
----
 
 <p align="center">
   <b>Developed with ❤️ for Service Booking Management System</b><br />
