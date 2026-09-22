@@ -23,6 +23,14 @@ public class StaffsController : ControllerBase
         return Ok(staffs);
     }
 
+    [Authorize(Roles = "Admin")]
+    [HttpPost]
+    public async Task<IActionResult> CreateStaff([FromBody] CreateStaffRequestDto request)
+    {
+        var created = await _staffScheduleService.CreateStaffAsync(request);
+        return StatusCode(201, created);
+    }
+
     [HttpGet("{id}/schedules")]
     public async Task<IActionResult> GetSchedules(
         int id,

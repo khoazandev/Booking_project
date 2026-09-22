@@ -10,6 +10,20 @@ public class StaffDto
     public bool IsActive { get; set; }
 }
 
+public class CreateStaffRequestDto
+{
+    [Required(ErrorMessage = "Họ tên nhân viên không được để trống")]
+    [MaxLength(100, ErrorMessage = "Họ tên nhân viên tối đa 100 ký tự")]
+    public string FullName { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Email nhân viên không được để trống")]
+    [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
+    [MaxLength(100, ErrorMessage = "Email tối đa 100 ký tự")]
+    public string Email { get; set; } = string.Empty;
+
+    public bool IsActive { get; set; } = true;
+}
+
 public class WorkScheduleDto
 {
     public int Id { get; set; }

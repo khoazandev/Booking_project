@@ -30,6 +30,8 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5000
+      - DATABASE_PROVIDER=PostgreSql
+      - ConnectionStrings__PostgresConnection=Host=db;Port=5432;Database=BookingDb;Username=postgres;Password=Password123!
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=BookingDb;Username=postgres;Password=Password123!
       - Jwt__Key=super_secret_jwt_key_booking_service_management_2026_demo_key_12345
       - Jwt__Issuer=BookingSystemApi

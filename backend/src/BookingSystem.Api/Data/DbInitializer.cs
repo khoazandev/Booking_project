@@ -8,9 +8,6 @@ public static class DbInitializer
 {
     public static async Task SeedAsync(ApplicationDbContext context)
     {
-        // Ensure database created
-        await context.Database.EnsureCreatedAsync();
-
         if (await context.Users.AnyAsync())
         {
             return; // Data already seeded

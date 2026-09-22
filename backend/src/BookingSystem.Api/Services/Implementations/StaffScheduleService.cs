@@ -36,6 +36,35 @@ public class StaffScheduleService : IStaffScheduleService
                           .ToListAsync();
     }
 
+    public async Task<StaffDto> CreateStaffAsync(CreateStaffRequestDto request)
+    {
+        var normalizedEmail = request.Email.Trim().ToLower();
+        var emailExists = await _context.Staffs.AnyAsync(s => s.Email.ToLower() == normalizedEmail);
+        if (emailExists)
+        {
+            throw new ConflictException("Email nhân viên đã tồn tại trong hệ thống.");
+        }
+
+        var staff = new Staff
+        {
+            FullName = request.FullName.Trim(),
+            Email = normalizedEmail,
+            IsActive = request.IsActive,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Staffs.Add(staff);
+        await _context.SaveChangesAsync();
+
+        return new StaffDto
+        {
+            Id = staff.Id,
+            FullName = staff.FullName,
+            Email = staff.Email,
+            IsActive = staff.IsActive
+        };
+    }
+
     public async Task<IEnumerable<WorkScheduleDto>> GetSchedulesAsync(int staffId, DateOnly? from, DateOnly? to)
     {
         var query = _context.WorkSchedules.AsNoTracking()

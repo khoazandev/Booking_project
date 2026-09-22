@@ -10,6 +10,7 @@ using BookingSystem.Api.Models.Enums;
 using BookingSystem.Api.Services.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace BookingSystem.Api.Services.Implementations;
 
@@ -152,10 +153,15 @@ public class BookingService : IBookingService
         }
 
         // 6. BONUS 5: Concurrency Control / Race Condition Prevention
-        // Acquire staff semaphore lock so simultaneous requests for the same staff
-        // are serialized and checked atomically against the database.
+        // Two-Tier Lock: In-Memory Semaphore per staff + Database Transaction (Serializable)
         var staffLock = _staffLocks.GetOrAdd(staff.Id, _ => new SemaphoreSlim(1, 1));
         await staffLock.WaitAsync();
+
+        IDbContextTransaction? transaction = null;
+        if (_context.Database.IsRelational())
+        {
+            transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+        }
 
         try
         {
@@ -191,6 +197,11 @@ public class BookingService : IBookingService
             _context.Bookings.Add(booking);
             await _context.SaveChangesAsync();
 
+            if (transaction != null)
+            {
+                await transaction.CommitAsync();
+            }
+
             var dto = new BookingDto
             {
                 Id = booking.Id,
@@ -222,6 +233,10 @@ public class BookingService : IBookingService
         }
         finally
         {
+            if (transaction != null)
+            {
+                await transaction.DisposeAsync();
+            }
             staffLock.Release();
         }
     }

@@ -16,12 +16,16 @@ var builder = WebApplication.CreateBuilder(args);
 // 1. Configure Database Context (Postgres for production/docker, SQLite for zero-config local dev)
 var postgresConn = builder.Configuration.GetConnectionString("PostgresConnection");
 var defaultConn = builder.Configuration.GetConnectionString("DefaultConnection");
+var dbProvider = builder.Configuration["DATABASE_PROVIDER"] ?? "";
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    if (!string.IsNullOrEmpty(postgresConn) && builder.Environment.IsProduction())
+    var usePostgres = dbProvider.Equals("PostgreSql", StringComparison.OrdinalIgnoreCase) ||
+                      (builder.Environment.IsProduction() && !string.IsNullOrEmpty(postgresConn));
+    if (usePostgres)
     {
-        options.UseNpgsql(postgresConn);
+        var activePostgresConn = !string.IsNullOrEmpty(postgresConn) ? postgresConn : defaultConn;
+        options.UseNpgsql(activePostgresConn);
     }
     else
     {
@@ -147,6 +151,10 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    if (context.Database.IsRelational())
+    {
+        await context.Database.MigrateAsync();
+    }
     await DbInitializer.SeedAsync(context);
 }
 
