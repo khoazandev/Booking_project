@@ -54,8 +54,8 @@ public class BookingService : IBookingService
             return Enumerable.Empty<AvailableSlotDto>();
         }
 
-        var dayStart = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
-        var dayEnd = date.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc);
+        var dayStart = date.ToDateTime(TimeOnly.MinValue);
+        var dayEnd = date.ToDateTime(TimeOnly.MaxValue);
 
         var existingBookings = await _context.Bookings
             .AsNoTracking()
@@ -67,12 +67,12 @@ public class BookingService : IBookingService
 
         var slots = new List<AvailableSlotDto>();
         var duration = TimeSpan.FromMinutes(service.DurationMinutes);
-        var step = TimeSpan.FromMinutes(30); // 30-minute interval grid
+        var step = duration; // Sequential non-overlapping slots aligned with service duration
 
         foreach (var sched in schedules)
         {
-            var schedStart = date.ToDateTime(sched.StartTime, DateTimeKind.Utc);
-            var schedEnd = date.ToDateTime(sched.EndTime, DateTimeKind.Utc);
+            var schedStart = date.ToDateTime(sched.StartTime);
+            var schedEnd = date.ToDateTime(sched.EndTime);
 
             var currentSlotStart = schedStart;
 
@@ -84,7 +84,9 @@ public class BookingService : IBookingService
                 var hasConflict = existingBookings.Any(b =>
                     currentSlotStart < b.EndTime && currentSlotEnd > b.StartTime);
 
-                var isPast = currentSlotStart <= DateTime.UtcNow;
+                var isPast = currentSlotStart.Kind == DateTimeKind.Utc
+                    ? currentSlotStart <= DateTime.UtcNow
+                    : currentSlotStart <= DateTime.Now;
 
                 slots.Add(new AvailableSlotDto
                 {
@@ -125,20 +127,22 @@ public class BookingService : IBookingService
             throw new BadRequestException("Nhân viên đã chọn không tồn tại hoặc đang bị khóa.");
         }
 
-        // 3. TC1: Validate StartTime > UtcNow
-        var startTimeUtc = request.StartTime.ToUniversalTime();
-        if (startTimeUtc <= DateTime.UtcNow)
+        // 3. TC1: Validate StartTime > Now
+        var isPast = request.StartTime.Kind == DateTimeKind.Utc
+            ? request.StartTime <= DateTime.UtcNow
+            : request.StartTime <= DateTime.Now;
+        if (isPast)
         {
             throw new BadRequestException("Thời gian bắt đầu đặt lịch phải lớn hơn thời điểm hiện tại.");
         }
 
         // 4. Calculate EndTime from Service.DurationMinutes
-        var endTimeUtc = startTimeUtc.AddMinutes(service.DurationMinutes);
+        var endTime = request.StartTime.AddMinutes(service.DurationMinutes);
 
         // 5. TC2: Validate booking window falls completely within staff's WorkSchedule
-        var bookingDate = DateOnly.FromDateTime(startTimeUtc);
-        var bookingStartTime = TimeOnly.FromDateTime(startTimeUtc);
-        var bookingEndTime = TimeOnly.FromDateTime(endTimeUtc);
+        var bookingDate = DateOnly.FromDateTime(request.StartTime);
+        var bookingStartTime = TimeOnly.FromDateTime(request.StartTime);
+        var bookingEndTime = TimeOnly.FromDateTime(endTime);
 
         var schedule = await _context.WorkSchedules
             .AsNoTracking()
@@ -170,8 +174,8 @@ public class BookingService : IBookingService
             var hasConflict = await _context.Bookings
                 .AnyAsync(b => b.StaffId == staff.Id &&
                                b.Status != BookingStatus.Cancelled &&
-                               startTimeUtc < b.EndTime &&
-                               endTimeUtc > b.StartTime);
+                               request.StartTime < b.EndTime &&
+                               endTime > b.StartTime);
 
             if (hasConflict)
             {
@@ -187,8 +191,8 @@ public class BookingService : IBookingService
                 CustomerId = customer.Id,
                 ServiceId = service.Id,
                 StaffId = staff.Id,
-                StartTime = startTimeUtc,
-                EndTime = endTimeUtc,
+                StartTime = request.StartTime,
+                EndTime = endTime,
                 Status = BookingStatus.Pending,
                 CustomerNote = request.CustomerNote?.Trim(),
                 CreatedAt = DateTime.UtcNow
@@ -294,8 +298,8 @@ public class BookingService : IBookingService
 
         if (date.HasValue)
         {
-            var dayStart = date.Value.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
-            var dayEnd = date.Value.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc);
+            var dayStart = date.Value.ToDateTime(TimeOnly.MinValue);
+            var dayEnd = date.Value.ToDateTime(TimeOnly.MaxValue);
             query = query.Where(b => b.StartTime >= dayStart && b.StartTime <= dayEnd);
         }
 
@@ -371,7 +375,10 @@ public class BookingService : IBookingService
         }
 
         // TC6: Cannot cancel if booking has already started or passed
-        if (booking.StartTime <= DateTime.UtcNow)
+        var isPast = booking.StartTime.Kind == DateTimeKind.Utc
+            ? booking.StartTime <= DateTime.UtcNow
+            : (booking.StartTime <= DateTime.Now || booking.StartTime <= DateTime.UtcNow);
+        if (isPast)
         {
             throw new BadRequestException("Không thể hủy lịch đặt đã bắt đầu hoặc đã qua thời gian hẹn.");
         }

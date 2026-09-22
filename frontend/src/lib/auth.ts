@@ -13,7 +13,16 @@ export function getUser(): User | null {
   const userStr = localStorage.getItem(USER_KEY);
   if (!userStr) return null;
   try {
-    return JSON.parse(userStr) as User;
+    const user = JSON.parse(userStr) as User;
+    if (user) {
+      const rawRole = user.role as unknown;
+      if (rawRole === 0 || rawRole === "0" || rawRole === "Admin") {
+        user.role = "Admin";
+      } else {
+        user.role = "Customer";
+      }
+    }
+    return user;
   } catch {
     return null;
   }
@@ -21,8 +30,12 @@ export function getUser(): User | null {
 
 export function setAuth(token: string, user: User): void {
   if (typeof window === "undefined") return;
+  const rawRole = user.role as unknown;
+  const normalizedRole = (rawRole === 0 || rawRole === "0" || rawRole === "Admin") ? "Admin" : "Customer";
+  const normalizedUser: User = { ...user, role: normalizedRole };
+
   localStorage.setItem(TOKEN_KEY, token);
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
+  localStorage.setItem(USER_KEY, JSON.stringify(normalizedUser));
 }
 
 export function clearAuth(): void {
@@ -37,5 +50,5 @@ export function isAuthenticated(): boolean {
 
 export function isAdmin(): boolean {
   const user = getUser();
-  return user?.role === "Admin";
+  return user?.role === "Admin" || (user?.role as unknown) === 0 || (user?.role as unknown) === "0";
 }

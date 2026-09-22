@@ -24,10 +24,10 @@ function BookingContent() {
   const [selectedServiceId, setSelectedServiceId] = useState<number | ''>(preselectedServiceId ? Number(preselectedServiceId) : '');
   const [selectedStaffId, setSelectedStaffId] = useState<number | ''>('');
   
-  // Default date to tomorrow in YYYY-MM-DD
+  // Default date to tomorrow in local YYYY-MM-DD
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const defaultDateString = tomorrow.toISOString().split('T')[0];
+  const defaultDateString = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
 
   const [selectedDate, setSelectedDate] = useState<string>(defaultDateString);
   const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
@@ -169,44 +169,47 @@ function BookingContent() {
 
   if (successBooking) {
     return (
-      <div className="max-w-lg mx-auto my-8 bg-white border border-emerald-200 rounded-2xl shadow-xl p-8 text-center space-y-6">
-        <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
-          <CheckCircle2 className="w-10 h-10" />
+      <div className="max-w-lg mx-auto my-8 bg-white/95 border border-neutral-200/90 rounded-2xl shadow-[0_14px_38px_-10px_rgba(0,0,0,0.09)] backdrop-blur-md p-8 text-center space-y-6">
+        <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto border border-emerald-200/80 shadow-sm">
+          <CheckCircle2 className="w-8 h-8" />
         </div>
-        <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-slate-900">Đặt Lịch Thành Công!</h2>
-          <p className="text-sm text-slate-600">
-            Mã lịch hẹn của bạn là: <strong className="text-indigo-600 font-mono text-base">{successBooking.bookingCode}</strong>
+        <div className="space-y-1.5">
+          <h2 className="text-2xl font-display font-semibold text-[#0a0a0a]">Đặt Lịch Thành Công</h2>
+          <p className="text-xs text-neutral-500">
+            Mã định danh lịch hẹn của bạn:
           </p>
-        </div>
-
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-slate-500">Dịch vụ:</span>
-            <span className="font-semibold text-slate-800">{successBooking.serviceName}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-500">Kỹ thuật viên:</span>
-            <span className="font-semibold text-slate-800">{successBooking.staffName}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-500">Thời gian bắt đầu:</span>
-            <span className="font-semibold text-slate-800">{new Date(successBooking.startTime).toLocaleString('vi-VN')}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-500">Thời lượng:</span>
-            <span className="font-semibold text-slate-800">{successBooking.durationMinutes} phút</span>
-          </div>
-          <div className="flex justify-between pt-2 border-t border-slate-200">
-            <span className="text-slate-500">Tổng tiền:</span>
-            <span className="font-bold text-indigo-600">{formatCurrency(successBooking.servicePrice)}</span>
+          <div className="inline-block mt-1 px-3.5 py-1 rounded-full bg-neutral-100 border border-neutral-200 font-mono text-sm font-bold text-[#0a0a0a] tracking-wider">
+            {successBooking.bookingCode}
           </div>
         </div>
 
-        <div className="flex gap-3">
+        <div className="bg-neutral-50/80 border border-neutral-200/80 rounded-xl p-5 text-left space-y-2.5 text-xs">
+          <div className="flex justify-between">
+            <span className="text-neutral-500">Dịch vụ:</span>
+            <span className="font-semibold text-neutral-900">{successBooking.serviceName}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-neutral-500">Kỹ thuật viên:</span>
+            <span className="font-semibold text-neutral-900">{successBooking.staffName}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-neutral-500">Thời gian bắt đầu:</span>
+            <span className="font-semibold text-neutral-900 font-mono tabular-nums">{new Date(successBooking.startTime).toLocaleString('vi-VN')}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-neutral-500">Thời lượng ca:</span>
+            <span className="font-semibold text-neutral-900 font-mono tabular-nums">{successBooking.durationMinutes} phút</span>
+          </div>
+          <div className="flex justify-between pt-2.5 border-t border-neutral-200">
+            <span className="text-neutral-500 font-medium">Tổng thanh toán:</span>
+            <span className="font-bold text-base font-mono tabular-nums text-[#0a0a0a]">{formatCurrency(successBooking.servicePrice)}</span>
+          </div>
+        </div>
+
+        <div className="flex gap-3 pt-2">
           <button
             onClick={() => router.push('/my-bookings')}
-            className="flex-1 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-xl transition"
+            className="flex-1 py-2.5 px-4 bg-[#0a0a0a] hover:bg-[#1a1a1a] text-white font-semibold text-xs rounded-xl shadow-[0_6px_16px_-4px_rgba(0,0,0,0.35)] transition-all active:scale-[0.98]"
           >
             Xem lịch hẹn của tôi
           </button>
@@ -215,7 +218,7 @@ function BookingContent() {
               setSuccessBooking(null);
               setSelectedSlot(null);
             }}
-            className="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm rounded-xl transition"
+            className="py-2.5 px-4 bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-700 font-medium text-xs rounded-xl transition-all active:scale-[0.98]"
           >
             Đặt lịch khác
           </button>
@@ -226,19 +229,26 @@ function BookingContent() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Đặt Lịch Dịch Vụ</h1>
-        <p className="text-sm text-slate-600 mt-1">
-          Chọn dịch vụ, kỹ thuật viên và khung giờ phù hợp với thời gian của bạn.
+      {/* Header */}
+      <div className="space-y-2">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-neutral-200/90 bg-white/80 text-[11px] font-mono tracking-tight text-neutral-700 shadow-sm backdrop-blur-md">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#ff6b00]" />
+          <span>HỆ THỐNG ĐẶT LỊCH HẸN</span>
+        </div>
+        <h1 className="text-3xl sm:text-4xl font-display font-medium text-[#0a0a0a] tracking-tight">
+          Chọn lịch hẹn dịch vụ
+        </h1>
+        <p className="text-xs sm:text-sm text-neutral-600">
+          Chỉ định kỹ thuật viên và lựa chọn khung thời gian phù hợp với lịch trình cá nhân của bạn.
         </p>
       </div>
 
       {conflictMessage && (
-        <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 flex items-start gap-3 shadow-sm">
+        <div className="p-4 bg-amber-50/80 border border-amber-300/80 rounded-2xl text-amber-900 flex items-start gap-3 shadow-sm backdrop-blur-sm">
           <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
           <div>
-            <h4 className="font-bold text-sm">Cảnh báo trùng lịch (409 Conflict)</h4>
-            <p className="text-xs text-amber-800 mt-1">{conflictMessage}</p>
+            <h4 className="font-bold text-xs uppercase font-mono tracking-wider text-amber-900">Trùng lịch đặt (409 Conflict)</h4>
+            <p className="text-xs text-amber-800 mt-1 leading-relaxed">{conflictMessage}</p>
           </div>
         </div>
       )}
@@ -247,10 +257,10 @@ function BookingContent() {
 
       <form onSubmit={handleBookingSubmit} className="space-y-6">
         {/* Step 1: Select Service */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center gap-2 font-bold text-slate-800">
-            <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center">1</span>
-            <span>Chọn Dịch Vụ</span>
+        <div className="bg-white/80 border border-neutral-200/80 rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] backdrop-blur-sm space-y-4">
+          <div className="flex items-center gap-2.5 font-semibold text-neutral-900">
+            <span className="w-5 h-5 rounded-full bg-[#0a0a0a] text-white text-[11px] font-mono flex items-center justify-center">1</span>
+            <span className="text-sm tracking-tight">Chọn Dịch Vụ</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -261,19 +271,19 @@ function BookingContent() {
                   type="button"
                   key={svc.id}
                   onClick={() => setSelectedServiceId(svc.id)}
-                  className={`p-4 rounded-xl border text-left transition ${
+                  className={`p-4 rounded-xl border text-left transition-all active:scale-[0.98] ${
                     isSelected
-                      ? 'border-indigo-600 bg-indigo-50/60 ring-2 ring-indigo-500/20'
-                      : 'border-slate-200 hover:border-slate-300 bg-white'
+                      ? 'border-[#0a0a0a] bg-neutral-100/90 ring-1 ring-[#0a0a0a]'
+                      : 'border-neutral-200/90 hover:border-neutral-300 bg-white/90'
                   }`}
                 >
-                  <div className="font-semibold text-slate-900 text-sm">{svc.name}</div>
-                  <div className="flex items-center justify-between text-xs mt-2 text-slate-500">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" />
-                      {svc.durationMinutes} phút
+                  <div className="font-semibold text-neutral-900 text-xs sm:text-sm">{svc.name}</div>
+                  <div className="flex items-center justify-between text-xs mt-2.5 text-neutral-500">
+                    <span className="flex items-center gap-1 font-mono tabular-nums text-[11px]">
+                      <Clock className="w-3 h-3 text-neutral-400" />
+                      {svc.durationMinutes}m
                     </span>
-                    <span className="font-bold text-indigo-600">{formatCurrency(svc.price)}</span>
+                    <span className="font-bold font-mono tabular-nums text-[#0a0a0a] text-xs sm:text-sm">{formatCurrency(svc.price)}</span>
                   </div>
                 </button>
               );
@@ -282,16 +292,16 @@ function BookingContent() {
         </div>
 
         {/* Step 2: Select Staff & Date */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center gap-2 font-bold text-slate-800">
-            <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center">2</span>
-            <span>Chọn Nhân Viên & Ngày Hẹn</span>
+        <div className="bg-white/80 border border-neutral-200/80 rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] backdrop-blur-sm space-y-4">
+          <div className="flex items-center gap-2.5 font-semibold text-neutral-900">
+            <span className="w-5 h-5 rounded-full bg-[#0a0a0a] text-white text-[11px] font-mono flex items-center justify-center">2</span>
+            <span className="text-sm tracking-tight">Chọn Nhân Viên & Ngày Hẹn</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
-                Kỹ thuật viên
+              <label className="block text-[11px] font-mono uppercase tracking-wider text-neutral-500 mb-2">
+                Kỹ thuật viên phụ trách
               </label>
               <div className="space-y-2">
                 {staffs.map((st) => (
@@ -299,23 +309,23 @@ function BookingContent() {
                     type="button"
                     key={st.id}
                     onClick={() => setSelectedStaffId(st.id)}
-                    className={`w-full p-3 rounded-xl border text-left flex items-center gap-3 transition ${
+                    className={`w-full p-3 rounded-xl border text-left flex items-center gap-3 transition-all active:scale-[0.98] ${
                       Number(selectedStaffId) === st.id
-                        ? 'border-indigo-600 bg-indigo-50/60 font-semibold text-indigo-900'
-                        : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
+                        ? 'border-[#0a0a0a] bg-neutral-100/90 font-semibold text-[#0a0a0a] ring-1 ring-[#0a0a0a]'
+                        : 'border-neutral-200/90 hover:border-neutral-300 text-neutral-700 bg-white/90'
                     }`}
                   >
-                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
-                      <User className="w-4 h-4" />
+                    <div className="w-7 h-7 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600 border border-neutral-200">
+                      <User className="w-3.5 h-3.5" />
                     </div>
-                    <span className="text-sm">{st.fullName}</span>
+                    <span className="text-xs sm:text-sm">{st.fullName}</span>
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
+              <label className="block text-[11px] font-mono uppercase tracking-wider text-neutral-500 mb-2">
                 Ngày hẹn
               </label>
               <input
@@ -323,9 +333,9 @@ function BookingContent() {
                 min={new Date().toISOString().split('T')[0]}
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
+                className="w-full p-3 bg-white/90 border border-neutral-200/90 rounded-xl text-xs sm:text-sm font-mono text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#ff6b00]/30 focus:border-[#ff6b00] transition"
               />
-              <p className="text-xs text-slate-400 mt-2">
+              <p className="text-[11px] text-neutral-400 mt-2">
                 Hệ thống chỉ cho phép đặt lịch từ thời điểm hiện tại trở đi.
               </p>
             </div>
@@ -333,23 +343,23 @@ function BookingContent() {
         </div>
 
         {/* Step 3: Select Available Slot */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+        <div className="bg-white/80 border border-neutral-200/80 rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] backdrop-blur-sm space-y-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 font-bold text-slate-800">
-              <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center">3</span>
-              <span>Chọn Khung Giờ Trống</span>
+            <div className="flex items-center gap-2.5 font-semibold text-neutral-900">
+              <span className="w-5 h-5 rounded-full bg-[#0a0a0a] text-white text-[11px] font-mono flex items-center justify-center">3</span>
+              <span className="text-sm tracking-tight">Khung Giờ Trống</span>
             </div>
             {selectedServiceObj && (
-              <span className="text-xs text-slate-500">
-                Thời lượng ca: <strong>{selectedServiceObj.durationMinutes} phút</strong>
+              <span className="text-xs font-mono tabular-nums text-neutral-500">
+                Ca dịch vụ: <strong>{selectedServiceObj.durationMinutes} phút</strong>
               </span>
             )}
           </div>
 
           {isLoadingSlots ? (
-            <div className="py-8 flex flex-col items-center justify-center text-slate-400 gap-2">
-              <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
-              <span className="text-xs">Đang kiểm tra lịch trống của nhân viên...</span>
+            <div className="py-8 flex flex-col items-center justify-center text-neutral-400 gap-2">
+              <Loader2 className="w-5 h-5 animate-spin text-[#0a0a0a]" />
+              <span className="text-xs font-mono">Đang kiểm tra khung giờ...</span>
             </div>
           ) : slots.length === 0 ? (
             <EmptyState
@@ -366,17 +376,17 @@ function BookingContent() {
                     key={idx}
                     disabled={!slot.isAvailable}
                     onClick={() => setSelectedSlot(slot)}
-                    className={`py-2.5 px-3 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center gap-0.5 transition ${
+                    className={`py-2.5 px-3 rounded-xl border text-xs font-mono tabular-nums font-medium flex flex-col items-center justify-center gap-0.5 transition-all active:scale-[0.98] ${
                       !slot.isAvailable
-                        ? 'border-slate-100 bg-slate-100 text-slate-400 cursor-not-allowed line-through'
+                        ? 'border-neutral-200/40 bg-neutral-100/60 text-neutral-400 cursor-not-allowed line-through'
                         : isSelected
-                        ? 'border-indigo-600 bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                        : 'border-slate-200 bg-white hover:border-indigo-500 text-slate-700'
+                        ? 'border-[#0a0a0a] bg-[#0a0a0a] text-white shadow-md ring-2 ring-[#ff6b00]/30'
+                        : 'border-neutral-200/90 bg-white/90 hover:border-neutral-400 text-neutral-800'
                     }`}
                   >
                     <span>{formatTime(slot.startTime)} - {formatTime(slot.endTime)}</span>
                     {!slot.isAvailable && (
-                      <span className="text-[10px] no-underline font-normal text-slate-400">
+                      <span className="text-[10px] no-underline font-normal text-neutral-400">
                         {slot.conflictReason || 'Đã kín'}
                       </span>
                     )}
@@ -388,9 +398,9 @@ function BookingContent() {
         </div>
 
         {/* Step 4: Customer Note & Submit */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+        <div className="bg-white/80 border border-neutral-200/80 rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] backdrop-blur-sm space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
+            <label className="block text-[11px] font-mono uppercase tracking-wider text-neutral-500 mb-2">
               Ghi chú cho buổi hẹn (Tùy chọn)
             </label>
             <textarea
@@ -398,23 +408,23 @@ function BookingContent() {
               value={customerNote}
               onChange={(e) => setCustomerNote(e.target.value)}
               placeholder="Nhập yêu cầu đặc biệt của bạn nếu có..."
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
+              className="w-full p-3 bg-white/90 border border-neutral-200/90 rounded-xl text-xs sm:text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#ff6b00]/30 focus:border-[#ff6b00] transition"
             />
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting || !selectedSlot || !selectedServiceId || !selectedStaffId}
-            className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl shadow-md shadow-indigo-200 flex items-center justify-center gap-2 transition"
+            className="w-full py-3.5 px-4 bg-[#0a0a0a] hover:bg-[#1a1a1a] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-xs sm:text-sm rounded-xl shadow-[0_14px_32px_-8px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.14)] ring-1 ring-black/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin text-neutral-300" />
                 <span>Đang xử lý đặt lịch...</span>
               </>
             ) : (
               <>
-                <Calendar className="w-4 h-4" />
+                <Calendar className="w-4 h-4 text-neutral-300" />
                 <span>Xác Nhận Đặt Lịch Hẹn</span>
               </>
             )}
@@ -428,9 +438,9 @@ function BookingContent() {
 export default function BookingPage() {
   return (
     <Suspense fallback={
-      <div className="py-12 flex flex-col items-center justify-center text-slate-400 gap-2">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-        <span className="text-sm">Đang tải trang đặt lịch...</span>
+      <div className="py-12 flex flex-col items-center justify-center text-neutral-400 gap-2">
+        <Loader2 className="w-7 h-7 animate-spin text-[#0a0a0a]" />
+        <span className="text-xs font-mono">Đang tải giao diện đặt lịch...</span>
       </div>
     }>
       <BookingContent />

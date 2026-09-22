@@ -25,10 +25,11 @@ public class ExpiredBookingScannerService : IExpiredBookingScannerService
 
     public async Task<int> CancelExpiredPendingBookingsAsync()
     {
-        var now = DateTime.UtcNow;
+        var nowUtc = DateTime.UtcNow;
+        var nowLocal = DateTime.Now;
 
         var expiredBookings = await _context.Bookings
-            .Where(b => b.Status == BookingStatus.Pending && b.StartTime <= now)
+            .Where(b => b.Status == BookingStatus.Pending && (b.StartTime <= nowLocal || b.StartTime <= nowUtc))
             .ToListAsync();
 
         if (!expiredBookings.Any())

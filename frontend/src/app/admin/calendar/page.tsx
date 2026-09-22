@@ -9,7 +9,6 @@ import { Booking, BookingStatus, Staff, PagedResult } from '@/types';
 import { formatCurrency, formatTime } from '@/lib/utils';
 import { AdminNav } from '@/components/layout/AdminNav';
 import {
-  ShieldCheck,
   ChevronLeft,
   ChevronRight,
   Calendar as CalendarIcon,
@@ -172,11 +171,11 @@ export default function AdminCalendarPage() {
 
   // Helper to filter bookings for a specific day and hour
   const getBookingsForSlot = (day: Date, hour: number) => {
-    const dayStr = day.toISOString().split('T')[0];
+    const dayStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
     return bookings.filter((b) => {
-      const bDate = new Date(b.startTime);
-      const bDateStr = bDate.toISOString().split('T')[0];
-      const bHour = bDate.getHours();
+      const bDateStr = b.startTime.split('T')[0];
+      const timePart = b.startTime.split('T')[1];
+      const bHour = timePart ? parseInt(timePart.split(':')[0], 10) : new Date(b.startTime).getHours();
       return bDateStr === dayStr && bHour === hour;
     });
   };
@@ -184,13 +183,13 @@ export default function AdminCalendarPage() {
   const getStatusColor = (status: BookingStatus) => {
     switch (status) {
       case 'Pending':
-        return 'bg-amber-100 border-amber-300 text-amber-900 hover:bg-amber-200';
+        return 'bg-amber-50/90 border-amber-200/90 text-amber-900 hover:border-amber-300';
       case 'Confirmed':
-        return 'bg-blue-100 border-blue-300 text-blue-900 hover:bg-blue-200';
+        return 'bg-[#0a0a0a] border-[#0a0a0a] text-white hover:bg-[#1a1a1a] shadow-xs';
       case 'Completed':
-        return 'bg-emerald-100 border-emerald-300 text-emerald-900 hover:bg-emerald-200';
+        return 'bg-emerald-50/90 border-emerald-200/90 text-emerald-900 hover:border-emerald-300';
       case 'Cancelled':
-        return 'bg-rose-100 border-rose-200 text-rose-700 opacity-60 line-through';
+        return 'bg-neutral-100/70 border-neutral-200 text-neutral-400 opacity-60 line-through';
     }
   };
 
@@ -198,40 +197,46 @@ export default function AdminCalendarPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <ShieldCheck className="w-6 h-6 text-purple-600" />
-        <h1 className="text-2xl font-bold text-slate-900">Quản Trị Hệ Thống</h1>
+      {/* Header */}
+      <div className="space-y-1.5">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-neutral-200/90 bg-white/80 text-[11px] font-mono tracking-tight text-neutral-700 shadow-sm backdrop-blur-md">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#ff6b00]" />
+          <span>LỊCH TRÌNH TỔNG QUAN</span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-display font-medium text-[#0a0a0a] tracking-tight">
+          Lịch Biểu Tuần (Calendar)
+        </h1>
       </div>
 
       <AdminNav />
 
       {/* Header Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white/80 border border-neutral-200/80 rounded-2xl p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] backdrop-blur-sm">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="inline-flex items-center gap-1 p-1 rounded-full border border-neutral-200/80 bg-neutral-50/80 shadow-xs">
             <button
               onClick={prevWeek}
-              className="p-2 hover:bg-slate-50 text-slate-600 transition"
+              className="p-1.5 hover:bg-white rounded-full text-neutral-600 transition active:scale-95"
               title="Tuần trước"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={todayWeek}
-              className="px-3 py-1.5 text-xs font-semibold hover:bg-slate-50 text-slate-700 border-x border-slate-200 transition"
+              className="px-3 py-1 text-xs font-mono font-medium hover:bg-white rounded-full text-neutral-800 transition active:scale-95"
             >
               Hôm nay
             </button>
             <button
               onClick={nextWeek}
-              className="p-2 hover:bg-slate-50 text-slate-600 transition"
+              className="p-1.5 hover:bg-white rounded-full text-neutral-600 transition active:scale-95"
               title="Tuần sau"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          <span className="text-sm font-bold text-slate-800">
+          <span className="text-xs font-mono tabular-nums font-semibold text-neutral-800">
             Tuần: {weekDays[0].toLocaleDateString('vi-VN')} — {weekDays[6].toLocaleDateString('vi-VN')}
           </span>
         </div>
@@ -239,11 +244,11 @@ export default function AdminCalendarPage() {
         {/* Staff Filter & Legend */}
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
-            <label className="text-xs font-semibold text-slate-500">Lọc Kỹ thuật viên:</label>
+            <label className="text-[11px] font-mono uppercase text-neutral-500">Kỹ thuật viên:</label>
             <select
               value={selectedStaffId}
               onChange={(e) => setSelectedStaffId(e.target.value ? Number(e.target.value) : '')}
-              className="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-3 py-1.5 text-xs bg-neutral-50/80 border border-neutral-200/90 rounded-xl text-neutral-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#ff6b00]/30 focus:border-[#ff6b00]"
             >
               <option value="">Tất cả nhân viên</option>
               {staffs.map((s) => (
@@ -254,18 +259,18 @@ export default function AdminCalendarPage() {
             </select>
           </div>
 
-          <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500 border-l border-slate-200 pl-4">
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Chờ duyệt
+          <div className="flex items-center gap-3 text-[11px] font-mono text-neutral-500 border-l border-neutral-200 pl-4">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-400"></span> Chờ duyệt
             </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Đã xác nhận
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#0a0a0a]"></span> Đã duyệt
             </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Hoàn tất
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Hoàn tất
             </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-400"></span> Đã hủy
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-neutral-300"></span> Đã hủy
             </span>
           </div>
         </div>
@@ -277,22 +282,22 @@ export default function AdminCalendarPage() {
         <LoadingSkeleton count={6} height="h-24" />
       ) : (
         /* Interactive Weekly Calendar Grid */
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-x-auto">
+        <div className="bg-white/80 border border-neutral-200/80 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] backdrop-blur-sm overflow-x-auto">
           <div className="min-w-[850px]">
             {/* Days Header */}
-            <div className="grid grid-cols-8 border-b border-slate-200 bg-slate-50 text-center text-xs font-bold text-slate-700">
-              <div className="py-3 px-2 border-r border-slate-200 text-slate-400">Giờ</div>
+            <div className="grid grid-cols-8 border-b border-neutral-200/80 bg-neutral-50/80 text-center text-xs font-semibold text-neutral-800">
+              <div className="py-3 px-2 border-r border-neutral-200/80 font-mono text-[11px] text-neutral-400">GIỜ</div>
               {weekDays.map((day, idx) => {
                 const isToday = new Date().toDateString() === day.toDateString();
                 return (
                   <div
                     key={idx}
-                    className={`py-3 px-2 border-r border-slate-200 last:border-r-0 ${
-                      isToday ? 'bg-purple-50/80 text-purple-800 font-extrabold' : ''
+                    className={`py-3 px-2 border-r border-neutral-200/80 last:border-r-0 ${
+                      isToday ? 'bg-neutral-200/50 text-[#0a0a0a] font-bold' : ''
                     }`}
                   >
                     <div>{dayNames[idx]}</div>
-                    <div className="text-[11px] text-slate-500 font-normal">
+                    <div className="text-[10px] font-mono tabular-nums text-neutral-400 font-normal">
                       {day.getDate()}/{day.getMonth() + 1}
                     </div>
                   </div>
@@ -301,11 +306,11 @@ export default function AdminCalendarPage() {
             </div>
 
             {/* Time Grid Rows */}
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-neutral-100">
               {hours.map((hour) => (
-                <div key={hour} className="grid grid-cols-8 min-h-[68px]">
+                <div key={hour} className="grid grid-cols-8 min-h-[70px]">
                   {/* Hour Label */}
-                  <div className="p-2 text-right text-xs font-semibold text-slate-400 border-r border-slate-200 bg-slate-50/50 flex items-start justify-end">
+                  <div className="p-2 text-right text-xs font-mono tabular-nums text-neutral-400 border-r border-neutral-200/80 bg-neutral-50/40 flex items-start justify-end">
                     {hour.toString().padStart(2, '0')}:00
                   </div>
 
@@ -317,8 +322,8 @@ export default function AdminCalendarPage() {
                     return (
                       <div
                         key={dayIdx}
-                        className={`p-1.5 border-r border-slate-200 last:border-r-0 space-y-1 ${
-                          isToday ? 'bg-purple-50/20' : ''
+                        className={`p-1.5 border-r border-neutral-200/80 last:border-r-0 space-y-1 ${
+                          isToday ? 'bg-neutral-100/30' : ''
                         }`}
                       >
                         {slotBookings.map((b) => (
@@ -326,14 +331,14 @@ export default function AdminCalendarPage() {
                             key={b.id}
                             type="button"
                             onClick={() => setSelectedBooking(b)}
-                            className={`w-full p-1.5 rounded-lg border text-left text-[11px] shadow-xs cursor-pointer transition ${getStatusColor(
+                            className={`w-full p-1.5 rounded-lg border text-left text-[11px] cursor-pointer transition-all active:scale-[0.98] ${getStatusColor(
                               b.status
                             )}`}
                           >
-                            <div className="font-bold truncate">{b.serviceName}</div>
-                            <div className="flex items-center justify-between text-[10px] opacity-85">
+                            <div className="font-semibold truncate tracking-tight">{b.serviceName}</div>
+                            <div className="flex items-center justify-between text-[10px] font-mono opacity-80 mt-0.5">
                               <span>{formatTime(b.startTime)}</span>
-                              <span className="truncate max-w-[60px]">{b.staffName.split(' ').pop()}</span>
+                              <span className="truncate max-w-[60px] font-sans">{b.staffName.split(' ').pop()}</span>
                             </div>
                           </button>
                         ))}
@@ -349,68 +354,68 @@ export default function AdminCalendarPage() {
 
       {/* Quick Inspection & Action Modal */}
       {selectedBooking && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white/95 border border-neutral-200/90 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 backdrop-blur-md">
+            <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
               <div className="flex items-center gap-2">
-                <CalendarIcon className="w-5 h-5 text-purple-600" />
-                <span className="font-bold text-base text-slate-900">Chi Tiết Lịch Hẹn</span>
+                <CalendarIcon className="w-4 h-4 text-[#ff6b00]" />
+                <span className="font-semibold text-base text-[#0a0a0a]">Chi Tiết Lịch Hẹn</span>
               </div>
-              <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+              <span className="font-mono text-xs font-bold text-[#0a0a0a] bg-neutral-100 border border-neutral-200/80 px-2.5 py-0.5 rounded-full">
                 {selectedBooking.bookingCode}
               </span>
             </div>
 
-            <div className="space-y-2.5 text-xs text-slate-600">
+            <div className="space-y-2.5 text-xs text-neutral-600 bg-neutral-50/80 p-3.5 rounded-xl border border-neutral-200/80">
               <div className="flex justify-between">
-                <span className="text-slate-400">Khách hàng:</span>
-                <span className="font-bold text-slate-800">{selectedBooking.customerName}</span>
+                <span className="text-neutral-400">Khách hàng:</span>
+                <span className="font-semibold text-neutral-900">{selectedBooking.customerName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Dịch vụ:</span>
-                <span className="font-semibold text-slate-800">{selectedBooking.serviceName}</span>
+                <span className="text-neutral-400">Dịch vụ:</span>
+                <span className="font-semibold text-neutral-900">{selectedBooking.serviceName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Kỹ thuật viên:</span>
-                <span className="font-semibold text-slate-800">{selectedBooking.staffName}</span>
+                <span className="text-neutral-400">Kỹ thuật viên:</span>
+                <span className="font-semibold text-neutral-900">{selectedBooking.staffName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Thời gian:</span>
-                <span className="font-semibold text-slate-800">
-                  {new Date(selectedBooking.startTime).toLocaleString('vi-VN')} ({selectedBooking.durationMinutes} phút)
+                <span className="text-neutral-400">Thời gian:</span>
+                <span className="font-semibold font-mono tabular-nums text-neutral-900">
+                  {new Date(selectedBooking.startTime).toLocaleString('vi-VN')} ({selectedBooking.durationMinutes}m)
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Giá dịch vụ:</span>
-                <span className="font-bold text-indigo-600">{formatCurrency(selectedBooking.servicePrice)}</span>
+                <span className="text-neutral-400">Giá dịch vụ:</span>
+                <span className="font-bold font-mono tabular-nums text-[#0a0a0a]">{formatCurrency(selectedBooking.servicePrice)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Trạng thái:</span>
-                <span className="font-bold uppercase text-[11px]">{selectedBooking.status}</span>
+                <span className="text-neutral-400">Trạng thái:</span>
+                <span className="font-bold font-mono text-[11px] text-neutral-900">{selectedBooking.status}</span>
               </div>
               {selectedBooking.customerNote && (
-                <div className="p-2 bg-slate-50 rounded-lg text-[11px]">
+                <div className="pt-2 border-t border-neutral-200/80 text-[11px]">
                   <strong>Ghi chú:</strong> {selectedBooking.customerNote}
                 </div>
               )}
               {selectedBooking.cancellationReason && (
-                <div className="p-2 bg-rose-50 text-rose-700 rounded-lg text-[11px]">
+                <div className="pt-2 border-t border-neutral-200/80 text-[11px] text-rose-700">
                   <strong>Lý do hủy:</strong> {selectedBooking.cancellationReason}
                 </div>
               )}
             </div>
 
             {/* Actions for Admin */}
-            <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+            <div className="flex items-center gap-2 pt-2">
               {selectedBooking.status === 'Pending' && (
                 <button
                   type="button"
                   disabled={isUpdatingStatus}
                   onClick={() => handleUpdateStatus('Confirmed')}
-                  className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition"
+                  className="flex-1 py-2 bg-[#0a0a0a] hover:bg-[#1a1a1a] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition shadow-sm active:scale-[0.98]"
                 >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Xác Nhận</span>
+                  <Check className="w-3.5 h-3.5 text-neutral-200" />
+                  <span>Duyệt Lịch</span>
                 </button>
               )}
 
@@ -419,7 +424,7 @@ export default function AdminCalendarPage() {
                   type="button"
                   disabled={isUpdatingStatus}
                   onClick={() => handleUpdateStatus('Completed')}
-                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition"
+                  className="flex-1 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition shadow-sm active:scale-[0.98]"
                 >
                   <CheckCheck className="w-3.5 h-3.5" />
                   <span>Hoàn Thành</span>
@@ -431,7 +436,7 @@ export default function AdminCalendarPage() {
                   type="button"
                   disabled={isUpdatingStatus}
                   onClick={handleCancelBooking}
-                  className="px-3 py-2 border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition"
+                  className="px-3.5 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition active:scale-[0.98]"
                 >
                   <X className="w-3.5 h-3.5" />
                   <span>Hủy Lịch</span>
@@ -441,7 +446,7 @@ export default function AdminCalendarPage() {
               <button
                 type="button"
                 onClick={() => setSelectedBooking(null)}
-                className="px-3 py-2 text-slate-500 hover:bg-slate-100 rounded-xl text-xs font-medium transition"
+                className="px-3.5 py-2 text-neutral-600 hover:bg-neutral-100 rounded-xl text-xs font-medium transition"
               >
                 Đóng
               </button>

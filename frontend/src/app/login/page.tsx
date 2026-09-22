@@ -26,9 +26,11 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      setAuth(data.token, data.user);
+      const rawRole = data.user.role as unknown;
+      const isAdminUser = rawRole === 'Admin' || rawRole === 0 || rawRole === '0';
+      setAuth(data.token, { ...data.user, role: isAdminUser ? 'Admin' : 'Customer' });
 
-      if (data.user.role === 'Admin') {
+      if (isAdminUser) {
         router.push('/admin/bookings');
       } else {
         router.push('/services');
@@ -47,14 +49,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto my-8">
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-xl p-8">
+    <div className="max-w-md mx-auto my-10 px-2">
+      <div className="bg-white/90 border border-neutral-200/90 rounded-2xl shadow-[0_16px_40px_-12px_rgba(0,0,0,0.08)] backdrop-blur-md p-8 sm:p-10">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mx-auto mb-3">
-            <Lock className="w-6 h-6" />
+          <div className="w-11 h-11 rounded-xl bg-[#0a0a0a] text-white flex items-center justify-center mx-auto mb-3.5 shadow-sm ring-1 ring-black/10">
+            <Lock className="w-5 h-5 text-neutral-200" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">Đăng Nhập Hệ Thống</h1>
-          <p className="text-sm text-slate-500 mt-1">Đăng nhập để đặt lịch và quản lý dịch vụ</p>
+          <h1 className="text-2xl font-display font-medium text-[#0a0a0a] tracking-tight">Đăng Nhập Tài Khoản</h1>
+          <p className="text-xs text-neutral-500 mt-1.5">Truy cập hệ thống quản lý & đặt lịch trực tuyến</p>
         </div>
 
         {errorMessage && (
@@ -63,35 +65,35 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Email
+            <label className="block text-[11px] font-mono uppercase tracking-wider text-neutral-600 mb-1.5">
+              Email đăng nhập
             </label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Mail className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                className="w-full pl-10 pr-4 py-2.5 bg-neutral-50/60 border border-neutral-200/90 rounded-xl text-xs sm:text-sm text-neutral-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#ff6b00]/30 focus:border-[#ff6b00] transition"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Mật khẩu
+            <label className="block text-[11px] font-mono uppercase tracking-wider text-neutral-600 mb-1.5">
+              Mật khẩu bảo mật
             </label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Lock className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                className="w-full pl-10 pr-4 py-2.5 bg-neutral-50/60 border border-neutral-200/90 rounded-xl text-xs sm:text-sm text-neutral-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#ff6b00]/30 focus:border-[#ff6b00] transition"
               />
             </div>
           </div>
@@ -99,52 +101,52 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium text-sm rounded-xl shadow-md shadow-indigo-200 flex items-center justify-center gap-2 transition"
+            className="w-full py-3 px-4 bg-[#0a0a0a] hover:bg-[#1a1a1a] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold text-xs sm:text-sm rounded-xl shadow-[0_14px_32px_-8px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.14)] ring-1 ring-black/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
           >
             {isLoading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Đang xử lý...</span>
+                <Loader2 className="w-4 h-4 animate-spin text-neutral-300" />
+                <span>Đang kiểm tra...</span>
               </>
             ) : (
               <>
-                <span>Đăng nhập</span>
-                <ArrowRight className="w-4 h-4" />
+                <span>Đăng nhập ngay</span>
+                <ArrowRight className="w-4 h-4 text-neutral-400" />
               </>
             )}
           </button>
         </form>
 
         {/* Demo Fast Fill Section */}
-        <div className="mt-8 pt-6 border-t border-slate-100">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-3">
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span>TÀI KHOẢN DÙNG THỬ NHANH (DEMO)</span>
+        <div className="mt-8 pt-6 border-t border-neutral-100">
+          <div className="flex items-center gap-1.5 text-[11px] font-mono tracking-wider text-neutral-500 mb-3">
+            <Sparkles className="w-3.5 h-3.5 text-[#ff6b00]" />
+            <span>TÀI KHOẢN TRẢI NGHIỆM NHANH (DEMO)</span>
           </div>
           <div className="grid grid-cols-1 gap-2">
             <button
               type="button"
               onClick={() => handleQuickFill('admin@booking.com', 'Admin123!')}
-              className="px-3 py-2 text-left text-xs bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 border border-slate-200 rounded-lg flex items-center justify-between transition"
+              className="px-3.5 py-2.5 text-left text-xs bg-neutral-50 hover:bg-neutral-100/90 border border-neutral-200/80 rounded-xl flex items-center justify-between transition active:scale-[0.99]"
             >
-              <span>Admin: <strong>admin@booking.com</strong></span>
-              <span className="text-[11px] px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-medium">Admin</span>
+              <span className="font-mono text-neutral-800">admin@booking.com</span>
+              <span className="text-[10px] font-mono font-semibold px-2 py-0.5 bg-neutral-900 text-white rounded-full">Quản trị viên</span>
             </button>
             <button
               type="button"
               onClick={() => handleQuickFill('customer1@demo.com', 'Password123!')}
-              className="px-3 py-2 text-left text-xs bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 border border-slate-200 rounded-lg flex items-center justify-between transition"
+              className="px-3.5 py-2.5 text-left text-xs bg-neutral-50 hover:bg-neutral-100/90 border border-neutral-200/80 rounded-xl flex items-center justify-between transition active:scale-[0.99]"
             >
-              <span>Khách 1: <strong>customer1@demo.com</strong></span>
-              <span className="text-[11px] px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-medium">Khách</span>
+              <span className="font-mono text-neutral-800">customer1@demo.com</span>
+              <span className="text-[10px] font-mono font-medium px-2 py-0.5 bg-neutral-200 text-neutral-800 rounded-full">Khách hàng 1</span>
             </button>
             <button
               type="button"
               onClick={() => handleQuickFill('customer2@demo.com', 'Password123!')}
-              className="px-3 py-2 text-left text-xs bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 border border-slate-200 rounded-lg flex items-center justify-between transition"
+              className="px-3.5 py-2.5 text-left text-xs bg-neutral-50 hover:bg-neutral-100/90 border border-neutral-200/80 rounded-xl flex items-center justify-between transition active:scale-[0.99]"
             >
-              <span>Khách 2: <strong>customer2@demo.com</strong></span>
-              <span className="text-[11px] px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-medium">Khách</span>
+              <span className="font-mono text-neutral-800">customer2@demo.com</span>
+              <span className="text-[10px] font-mono font-medium px-2 py-0.5 bg-neutral-200 text-neutral-800 rounded-full">Khách hàng 2</span>
             </button>
           </div>
         </div>

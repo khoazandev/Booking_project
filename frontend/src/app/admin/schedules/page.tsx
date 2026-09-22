@@ -7,7 +7,7 @@ import { isAdmin, isAuthenticated } from '@/lib/auth';
 import { Staff, WorkSchedule } from '@/types';
 import { formatTime, formatDate } from '@/lib/utils';
 import { AdminNav } from '@/components/layout/AdminNav';
-import { ShieldCheck, Plus, Calendar, Clock, Loader2, UserPlus, X } from 'lucide-react';
+import { Plus, Calendar, Clock, Loader2, UserPlus, X } from 'lucide-react';
 import { LoadingSkeleton } from '@/components/feedback/LoadingSkeleton';
 import { ErrorAlert } from '@/components/feedback/ErrorAlert';
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -150,17 +150,23 @@ export default function AdminSchedulesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <ShieldCheck className="w-6 h-6 text-purple-600" />
-        <h1 className="text-2xl font-bold text-slate-900">Quản Trị Hệ Thống</h1>
+      {/* Header */}
+      <div className="space-y-1.5">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-neutral-200/90 bg-white/80 text-[11px] font-mono tracking-tight text-neutral-700 shadow-sm backdrop-blur-md">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#ff6b00]" />
+          <span>ĐIỀU PHỐI NHÂN SỰ</span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-display font-medium text-[#0a0a0a] tracking-tight">
+          Xếp Lịch Làm Việc Nhân Viên
+        </h1>
       </div>
 
       <AdminNav />
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Thiết Lập Lịch Làm Việc Nhân Viên</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Xếp ca làm việc, kiểm tra trùng ca và quản lý đội ngũ kỹ thuật viên</p>
+          <h2 className="text-sm font-semibold text-neutral-900 tracking-tight">Thiết Lập Ca Trực & Phân Bổ</h2>
+          <p className="text-xs text-neutral-500 mt-0.5">Xếp ca làm việc, phòng chống xung đột giờ và thêm nhân sự mới</p>
         </div>
 
         <button
@@ -168,9 +174,9 @@ export default function AdminSchedulesPage() {
             setStaffModalError(null);
             setIsStaffModalOpen(true);
           }}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition self-start sm:self-auto"
+          className="px-4 py-2 bg-[#0a0a0a] hover:bg-[#1a1a1a] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-[0_6px_16px_-4px_rgba(0,0,0,0.35)] transition-all active:scale-[0.98] self-start sm:self-auto"
         >
-          <UserPlus className="w-4 h-4" />
+          <UserPlus className="w-3.5 h-3.5 text-neutral-300" />
           <span>Thêm Kỹ Thuật Viên Mới</span>
         </button>
       </div>
@@ -179,9 +185,9 @@ export default function AdminSchedulesPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Form add schedule */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-          <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
-            <Plus className="w-4 h-4 text-purple-600" />
+        <div className="bg-white/80 border border-neutral-200/80 rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] backdrop-blur-sm space-y-4">
+          <h3 className="font-semibold text-sm text-[#0a0a0a] flex items-center gap-2">
+            <Plus className="w-4 h-4 text-[#ff6b00]" />
             <span>Thêm Ca Làm Việc Mới</span>
           </h3>
 
@@ -189,13 +195,13 @@ export default function AdminSchedulesPage() {
 
           <form onSubmit={handleAddSchedule} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-                Chọn Nhân Viên
+              <label className="block text-[11px] font-mono uppercase tracking-wider text-neutral-500 mb-1">
+                Nhân viên phụ trách
               </label>
               <select
                 value={selectedStaffId}
                 onChange={(e) => setSelectedStaffId(Number(e.target.value))}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none"
+                className="w-full p-2.5 bg-neutral-50/80 border border-neutral-200/90 rounded-xl text-xs sm:text-sm text-neutral-800 focus:bg-white focus:ring-2 focus:ring-[#ff6b00]/30 focus:border-[#ff6b00] outline-none transition"
               >
                 {staffs.map((st) => (
                   <option key={st.id} value={st.id}>
@@ -206,42 +212,42 @@ export default function AdminSchedulesPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-                Ngày Làm Việc
+              <label className="block text-[11px] font-mono uppercase tracking-wider text-neutral-500 mb-1">
+                Ngày làm việc
               </label>
               <input
                 type="date"
                 required
                 value={workDate}
                 onChange={(e) => setWorkDate(e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none"
+                className="w-full p-2.5 bg-neutral-50/80 border border-neutral-200/90 rounded-xl text-xs sm:text-sm font-mono text-neutral-800 focus:bg-white focus:ring-2 focus:ring-[#ff6b00]/30 focus:border-[#ff6b00] outline-none transition"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-                  Giờ Bắt Đầu
+                <label className="block text-[11px] font-mono uppercase tracking-wider text-neutral-500 mb-1">
+                  Giờ bắt đầu
                 </label>
                 <input
                   type="time"
                   required
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none"
+                  className="w-full p-2.5 bg-neutral-50/80 border border-neutral-200/90 rounded-xl text-xs sm:text-sm font-mono text-neutral-800 focus:bg-white focus:ring-2 focus:ring-[#ff6b00]/30 focus:border-[#ff6b00] outline-none transition"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-                  Giờ Kết Thúc
+                <label className="block text-[11px] font-mono uppercase tracking-wider text-neutral-500 mb-1">
+                  Giờ kết thúc
                 </label>
                 <input
                   type="time"
                   required
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none"
+                  className="w-full p-2.5 bg-neutral-50/80 border border-neutral-200/90 rounded-xl text-xs sm:text-sm font-mono text-neutral-800 focus:bg-white focus:ring-2 focus:ring-[#ff6b00]/30 focus:border-[#ff6b00] outline-none transition"
                 />
               </div>
             </div>
@@ -249,11 +255,11 @@ export default function AdminSchedulesPage() {
             <button
               type="submit"
               disabled={isSubmitting || !selectedStaffId}
-              className="w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition flex items-center justify-center gap-2 shadow-sm"
+              className="w-full py-2.5 px-4 bg-[#0a0a0a] hover:bg-[#1a1a1a] disabled:opacity-50 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-[0_14px_32px_-8px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.14)] ring-1 ring-black/20 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-neutral-300" />
                   <span>Đang lưu...</span>
                 </>
               ) : (
@@ -264,12 +270,12 @@ export default function AdminSchedulesPage() {
         </div>
 
         {/* Schedule list */}
-        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-base text-slate-900">
-              Lịch Làm Việc Của: <span className="text-purple-600">{selectedStaff?.fullName}</span>
+        <div className="lg:col-span-2 bg-white/80 border border-neutral-200/80 rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] backdrop-blur-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+            <h3 className="font-semibold text-sm text-[#0a0a0a]">
+              Lịch Làm Việc: <span className="text-[#ff6b00] font-bold">{selectedStaff?.fullName}</span>
             </h3>
-            <span className="text-xs text-slate-400">Tổng: {schedules.length} ca</span>
+            <span className="text-xs font-mono tabular-nums text-neutral-400">Tổng: {schedules.length} ca</span>
           </div>
 
           {isLoading ? (
@@ -277,18 +283,20 @@ export default function AdminSchedulesPage() {
           ) : schedules.length === 0 ? (
             <EmptyState
               title="Chưa có ca làm việc"
-              description="Nhân viên này chưa có lịch làm việc nào được xếp."
+              description="Nhân viên này chưa có lịch làm việc nào được xếp trong hệ thống."
             />
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-neutral-100">
               {schedules.map((sc) => (
-                <div key={sc.id} className="py-3 flex items-center justify-between text-sm">
+                <div key={sc.id} className="py-3.5 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-3">
-                    <Calendar className="w-4 h-4 text-purple-600" />
-                    <span className="font-semibold text-slate-800">{formatDate(sc.workDate)}</span>
+                    <div className="w-7 h-7 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-600 border border-neutral-200/80">
+                      <Calendar className="w-3.5 h-3.5 text-neutral-600" />
+                    </div>
+                    <span className="font-semibold text-neutral-900 font-mono">{formatDate(sc.workDate)}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-slate-600 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-medium">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  <div className="flex items-center gap-2 text-neutral-700 bg-neutral-100/80 px-3 py-1.5 rounded-xl border border-neutral-200/80 text-xs font-mono tabular-nums font-medium">
+                    <Clock className="w-3.5 h-3.5 text-neutral-400" />
                     <span>{formatTime(sc.startTime)} - {formatTime(sc.endTime)}</span>
                   </div>
                 </div>
@@ -300,30 +308,30 @@ export default function AdminSchedulesPage() {
 
       {/* Modal Add New Staff */}
       {isStaffModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white/95 border border-neutral-200/90 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 backdrop-blur-md">
+            <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
               <div className="flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-indigo-600" />
-                <h3 className="font-bold text-base text-slate-900">Thêm Kỹ Thuật Viên Mới</h3>
+                <UserPlus className="w-4 h-4 text-[#ff6b00]" />
+                <h3 className="font-semibold text-base text-[#0a0a0a]">Thêm Kỹ Thuật Viên Mới</h3>
               </div>
               <button
                 onClick={() => setIsStaffModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
+                className="p-1 text-neutral-400 hover:text-neutral-600 rounded-lg"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {staffModalError && (
-              <div className="text-xs text-rose-600 bg-rose-50 p-2.5 rounded-lg border border-rose-200">
+              <div className="text-xs text-rose-700 bg-rose-50/80 p-2.5 rounded-xl border border-rose-200">
                 {staffModalError}
               </div>
             )}
 
             <form onSubmit={handleCreateStaff} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-[11px] font-mono uppercase tracking-wider text-neutral-600 mb-1">
                   Họ và tên <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -332,13 +340,13 @@ export default function AdminSchedulesPage() {
                   placeholder="Ví dụ: Hoàng Minh Trí"
                   value={newStaffFullName}
                   onChange={(e) => setNewStaffFullName(e.target.value)}
-                  className="w-full text-xs p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-xs p-3 border border-neutral-200/90 bg-neutral-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff6b00]/30 focus:border-[#ff6b00] focus:bg-white transition"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Email <span className="text-rose-500">*</span>
+                <label className="block text-[11px] font-mono uppercase tracking-wider text-neutral-600 mb-1">
+                  Địa chỉ Email <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="email"
@@ -346,7 +354,7 @@ export default function AdminSchedulesPage() {
                   placeholder="Ví dụ: hoangtri@booking.com"
                   value={newStaffEmail}
                   onChange={(e) => setNewStaffEmail(e.target.value)}
-                  className="w-full text-xs p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-xs p-3 border border-neutral-200/90 bg-neutral-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff6b00]/30 focus:border-[#ff6b00] focus:bg-white transition"
                 />
               </div>
 
@@ -356,27 +364,27 @@ export default function AdminSchedulesPage() {
                   id="staffIsActive"
                   checked={newStaffIsActive}
                   onChange={(e) => setNewStaffIsActive(e.target.checked)}
-                  className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                  className="w-4 h-4 text-[#0a0a0a] rounded border-neutral-300 focus:ring-[#ff6b00]"
                 />
-                <label htmlFor="staffIsActive" className="text-xs font-medium text-slate-700 cursor-pointer">
+                <label htmlFor="staffIsActive" className="text-xs font-medium text-neutral-700 cursor-pointer">
                   Kích hoạt nhân viên (Sẵn sàng nhận lịch hẹn)
                 </label>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
                 <button
                   type="button"
                   onClick={() => setIsStaffModalOpen(false)}
-                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition"
+                  className="px-4 py-2 text-xs font-semibold text-neutral-600 hover:bg-neutral-100 rounded-xl transition"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={isCreatingStaff}
-                  className="px-4 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm transition flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-4 py-2 text-xs font-semibold bg-[#0a0a0a] hover:bg-[#1a1a1a] text-white rounded-xl shadow-sm transition flex items-center gap-1.5 disabled:opacity-50 active:scale-[0.98]"
                 >
-                  {isCreatingStaff && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {isCreatingStaff && <Loader2 className="w-3.5 h-3.5 animate-spin text-neutral-300" />}
                   Lưu Nhân Viên
                 </button>
               </div>
